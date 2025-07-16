@@ -206,8 +206,8 @@ docker run -p 5000:5000 --env-file .env medibot
 
 ## 📫 Contact
 
-**Moein Namdari**
-🔗 [GitHub](https://github.com/moeinnm-99)
+**Moein Nouri**</br>
+🔗 [GitHub](https://github.com/moeinnm-99)</br>
 📧 [moeinnm.99@gmail.com](mailto:moeinnm.99@gmail.com)
 
 
@@ -224,9 +224,8 @@ docker run -p 5000:5000 --env-file .env medibot
 Contributions welcome! Feel free to open issues or submit PRs.
 
 ## 🔮 Coming Soon
-- Telegram notification integration
+- UI Changes
 - User accounts system
-- Dark/light mode toggle
 
 ---
 
