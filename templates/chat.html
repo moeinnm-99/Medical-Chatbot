@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MediAI - Healthcare Assistant</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary-light: #6c8eff;
+            --primary-dark: #4a6cf7;
+            --text-dark: #1e293b;
+            --text-light: #64748b;
+            --bg-light: #f8fafc;
+            --bg-dark: #0f172a;
+            --card-glass: rgba(255, 255, 255, 0.85);
+            --card-glass-dark: rgba(15, 23, 42, 0.85);
+            --user-bubble: #e0e7ff;
+            --bot-bubble: #ffffff;
+            --shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            --shadow-dark: 0 8px 32px rgba(0, 0, 0, 0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            transition: background 0.3s, color 0.2s;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background: linear-gradient(135deg, #f1f5f9 0%, #e2e8f0 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            color: var(--text-dark);
+        }
+
+        body.dark-mode {
+            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            color: #e2e8f0;
+        }
+
+        .chat-container {
+            width: 100%;
+            max-width: 900px;
+            height: 90vh;
+            max-height: 800px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+            background: var(--card-glass);
+            display: flex;
+            flex-direction: column;
+        }
+
+        body.dark-mode .chat-container {
+            background: var(--card-glass-dark);
+            box-shadow: var(--shadow-dark);
+        }
+
+        .chat-header {
+            padding: 20px;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+        }
+
+        .avatar {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .header-text h2 {
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-bottom: 3px;
+        }
+
+        .header-text p {
+            font-size: 0.85rem;
+            opacity: 0.9;
+        }
+
+        .status {
+            position: absolute;
+            right: 20px;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.8rem;
+        }
+
+        .status-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #4ade80;
+            animation: pulse 2s infinite;
+        }
+
+        .chat-body {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: var(--primary-light) transparent;
+        }
+
+        .chat-body::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .chat-body::-webkit-scrollbar-track {
+            background: transparent;
+        }
+
+        .chat-body::-webkit-scrollbar-thumb {
+            background-color: var(--primary-light);
+            border-radius: 20px;
+        }
+
+        .message {
+            display: flex;
+            margin-bottom: 15px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .user-message {
+            justify-content: flex-end;
+        }
+
+        .bot-message {
+            justify-content: flex-start;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 12px 16px;
+            border-radius: 18px;
+            line-height: 1.5;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        .user-message .message-bubble {
+            background: var(--user-bubble);
+            border-bottom-right-radius: 4px;
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .user-message .message-bubble {
+            background: #1e40af;
+            color: white;
+        }
+
+        .bot-message .message-bubble {
+            background: var(--bot-bubble);
+            border-bottom-left-radius: 4px;
+            color: var(--text-dark);
+        }
+
+        body.dark-mode .bot-message .message-bubble {
+            background: #1e293b;
+            color: #e2e8f0;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .message-time {
+            display: block;
+            font-size: 0.7rem;
+            margin-top: 5px;
+            opacity: 0.7;
+        }
+
+        .user-message .message-time {
+            text-align: right;
+        }
+
+        .typing-indicator {
+            display: inline-flex;
+            padding: 12px 16px;
+            background: var(--bot-bubble);
+            border-radius: 18px;
+            border-bottom-left-radius: 4px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .typing-indicator {
+            background: #1e293b;
+        }
+
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            margin: 0 2px;
+            background-color: var(--text-light);
+            border-radius: 50%;
+            opacity: 0.4;
+            animation: typingAnimation 1.4s infinite ease-in-out;
+        }
+
+        .typing-dot:nth-child(1) {
+            animation-delay: 0s;
+        }
+
+        .typing-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        .chat-footer {
+            padding: 15px 20px;
+            background: rgba(255, 255, 255, 0.7);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .chat-footer {
+            background: rgba(15, 23, 42, 0.7);
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .input-container {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .message-input {
+            flex: 1;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 50px;
+            background: rgba(255, 255, 255, 0.9);
+            font-size: 0.95rem;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s;
+        }
+
+        body.dark-mode .message-input {
+            background: rgba(30, 41, 59, 0.9);
+            color: #e2e8f0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .message-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 2px var(--primary-light);
+        }
+
+        .send-button {
+            width: 48px;
+            height: 48px;
+            border: none;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-light) 0%, var(--primary-dark) 100%);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(74, 108, 247, 0.3);
+            transition: all 0.3s;
+        }
+
+        .send-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(74, 108, 247, 0.4);
+        }
+
+        .send-button:active {
+            transform: translateY(0);
+        }
+
+        .quick-replies {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+
+        .quick-reply {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50px;
+            padding: 8px 16px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        body.dark-mode .quick-reply {
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+        }
+
+        .quick-reply:hover {
+            background: var(--primary-light);
+            color: white;
+            border-color: var(--primary-light);
+            transform: translateY(-2px);
+        }
+
+        .welcome-message {
+            text-align: center;
+            padding: 20px 0;
+            color: var(--text-light);
+            font-size: 0.9rem;
+        }
+
+        body.dark-mode .welcome-message {
+            color: #94a3b8;
+        }
+
+        .theme-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            color: white;
+            font-size: 1.2rem;
+            cursor: pointer;
+            z-index: 10;
+        }
+
+        .bot-response {
+            line-height: 1.6;
+        }
+
+        .bot-response h3 {
+            font-size: 1.1rem;
+            margin: 10px 0 5px;
+            color: var(--primary-dark);
+        }
+
+        body.dark-mode .bot-response h3 {
+            color: var(--primary-light);
+        }
+
+        .bot-response ul, .bot-response ol {
+            padding-left: 20px;
+            margin: 8px 0;
+        }
+
+        .bot-response li {
+            margin-bottom: 5px;
+        }
+
+        .bot-response strong {
+            color: var(--primary-dark);
+        }
+
+        body.dark-mode .bot-response strong {
+            color: var(--primary-light);
+        }
+
+        @keyframes typingAnimation {
+            0%, 60%, 100% {
+                transform: translateY(0);
+                opacity: 0.4;
+            }
+            30% {
+                transform: translateY(-5px);
+                opacity: 1;
+            }
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% {
+                opacity: 0.6;
+            }
+            50% {
+                opacity: 1;
+            }
+            100% {
+                opacity: 0.6;
+            }
+        }
+
+        /* 3D Button Effect */
+        .send-button {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .send-button::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                rgba(255, 255, 255, 0.3),
+                rgba(255, 255, 255, 0)
+            );
+            transform: rotate(30deg);
+            transition: all 0.3s;
+        }
+
+        .send-button:hover::after {
+            left: 100%;
+        }
+    </style>
+</head>
+<body>
+    <div class="chat-container">
+        <div class="chat-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/4712/4712035.png" alt="MediAI" class="avatar">
+            <div class="header-text">
+                <h2>MediAI Assistant</h2>
+                <p>Your personal healthcare companion</p>
+            </div>
+            <div class="status">
+                <div class="status-dot"></div>
+                <span>Online</span>
+            </div>
+            <button class="theme-toggle" id="themeToggle">
+                <i class="fas fa-moon"></i>
+            </button>
+        </div>
+        
+        <div class="chat-body" id="chatBody">
+            <div class="welcome-message">
+                <p>Hello! I'm MediAI, here to help with your health questions. How can I assist you today?</p>
+                <div class="quick-replies">
+                    <div class="quick-reply">Common cold symptoms</div>
+                    <div class="quick-reply">How to lower blood pressure?</div>
+                    <div class="quick-reply">Best foods for immunity</div>
+                    <div class="quick-reply">When to see a doctor for fever?</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chat-footer">
+            <form id="messageForm" class="input-container">
+                <input type="text" id="messageInput" class="message-input" placeholder="Type your health question..." autocomplete="off" required>
+                <button type="submit" class="send-button">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // Theme toggle
+            $('#themeToggle').click(function() {
+                $('body').toggleClass('dark-mode');
+                $(this).html($('body').hasClass('dark-mode') ? '<i class="fas fa-sun"></i>' : '<i class="fas fa-moon"></i>');
+            });
+
+            // Quick replies
+            $('.quick-reply').click(function() {
+                const text = $(this).text();
+                $('#messageInput').val(text);
+                $('#messageForm').submit();
+            });
+
+            // Message submission
+            $('#messageForm').on('submit', function(e) {
+                e.preventDefault();
+                const message = $('#messageInput').val().trim();
+                if (message === '') return;
+
+                // Add user message
+                addMessage(message, 'user');
+                $('#messageInput').val('');
+
+                // Show typing indicator
+                showTypingIndicator();
+
+                // Simulate bot response (replace with actual API call)
+                setTimeout(() => {
+                    removeTypingIndicator();
+                    const botResponse = generateBotResponse(message);
+                    addMessage(botResponse, 'bot');
+                }, 1500);
+            });
+
+            function addMessage(text, sender) {
+                const time = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                const messageClass = sender === 'user' ? 'user-message' : 'bot-message';
+                const bubbleClass = sender === 'user' ? '' : 'bot-response';
+                
+                const messageHtml = `
+                    <div class="message ${messageClass}">
+                        <div class="message-bubble ${bubbleClass}">
+                            ${sender === 'bot' ? formatBotResponse(text) : text}
+                            <span class="message-time">${time}</span>
+                        </div>
+                    </div>`;
+                
+                $('#chatBody').append(messageHtml);
+                scrollToBottom();
+            }
+
+            function formatBotResponse(text) {
+                // Simple markdown formatting for bot responses
+                return text
+                    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                    .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+                    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                    .replace(/^- (.*$)/gm, '<li>$1</li>')
+                    .replace(/\n/g, '<br>');
+            }
+
+            function showTypingIndicator() {
+                const typingHtml = `
+                    <div class="message bot-message" id="typingIndicator">
+                        <div class="typing-indicator">
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                            <div class="typing-dot"></div>
+                        </div>
+                    </div>`;
+                $('#chatBody').append(typingHtml);
+                scrollToBottom();
+            }
+
+            function removeTypingIndicator() {
+                $('#typingIndicator').remove();
+            }
+
+            function scrollToBottom() {
+                $('#chatBody').animate({ scrollTop: $('#chatBody')[0].scrollHeight }, 300);
+            }
+
+            // Sample bot responses
+            function generateBotResponse(userMessage) {
+                const lowerMessage = userMessage.toLowerCase();
+                
+                if (lowerMessage.includes('cold') || lowerMessage.includes('flu')) {
+                    return `**Common Cold Symptoms:**\n- Runny or stuffy nose\n- Sore throat\n- Cough\n- Congestion\n- Mild headache\n- Sneezing\n\n*Treatment:* Rest, fluids, and over-the-counter cold medicines can help. See a doctor if symptoms persist beyond 10 days.`;
+                } 
+                else if (lowerMessage.includes('blood pressure')) {
+                    return `**Ways to Lower Blood Pressure:**\n1. Reduce sodium in your diet\n2. Exercise regularly\n3. Limit alcohol consumption\n4. Manage stress through meditation\n5. Maintain a healthy weight\n\n*Note:* Always consult with your doctor before making significant lifestyle changes.`;
+                }
+                else if (lowerMessage.includes('immunity') || lowerMessage.includes('immune')) {
+                    return `**Best Foods for Immunity:**\n\n- Citrus fruits (oranges, lemons)\n- Red bell peppers\n- Broccoli\n- Garlic\n- Ginger\n- Spinach\n- Yogurt\n- Almonds\n\nThese foods are rich in vitamins C and E, beta-carotene, and zinc.`;
+                }
+                else if (lowerMessage.includes('fever')) {
+                    return `**When to See a Doctor for Fever:**\n\nFor adults:\n- Temperature above 103°F (39.4°C)\n- Fever lasting more than 3 days\n- Severe headache, rash, or sensitivity to light\n\nFor children:\n- Under 3 months: Any fever\n- 3-6 months: 101°F+ (38.3°C+)\n- Older than 6 months: 102°F+ (38.9°C+) or lasting more than 2 days`;
+                }
+                else {
+                    return `I'm designed to provide general health information. For your question about *"${userMessage}"*, I recommend consulting with a healthcare professional for personalized advice.\n\nIn the meantime, I can help with:\n- Symptom explanations\n- Basic first aid guidance\n- General wellness tips\n- Medication information`;
+                }
+            }
+        });
+    </script>
+</body>
+</html>
